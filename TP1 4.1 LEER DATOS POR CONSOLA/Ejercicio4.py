@@ -1,0 +1,1 @@
+print("Materia", input("Ingrese el nombre de la materia: "), sep=":")

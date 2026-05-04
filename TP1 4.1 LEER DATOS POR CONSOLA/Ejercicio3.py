@@ -1,0 +1,1 @@
+print("Edad confirmada:",input("Ingrese su edad:") )
