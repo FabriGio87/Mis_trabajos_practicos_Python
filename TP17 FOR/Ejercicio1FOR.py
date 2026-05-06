@@ -3,7 +3,7 @@
 2. Usa un bucle `for` para imprimir cada nombre de la lista en una línea separada.
 nombres= juan, maria, pedro"""
 # Crear lista
-lista_nombres = ("Adriana", "Anabel", "Sienna", "Amèlie", "Fabricio")
+lista_nombres = ("Juan", "María", "Pedro", "Carlos", "Ana")
 
 # Recorremos con for
 for nombres in lista_nombres:
