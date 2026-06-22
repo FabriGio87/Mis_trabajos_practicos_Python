@@ -1,0 +1,519 @@
+```html
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Calculadora de Gastos Personales Pro</title>
+
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: Arial, Helvetica, sans-serif;
+        }
+
+        body {
+            background: #f4f6f9;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, .1);
+        }
+
+        h1 {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .formulario {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr auto;
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        input,
+        select {
+            padding: 10px;
+        }
+
+        button {
+            padding: 10px;
+            cursor: pointer;
+            border: none;
+            border-radius: 5px;
+        }
+
+        .btn-agregar {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-editar {
+            background: #ffc107;
+        }
+
+        .btn-borrar {
+            background: #dc3545;
+            color: white;
+        }
+
+        .filtros {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .resumen {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+        }
+
+        .card {
+            background: #eef2f7;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+            text-align: center;
+        }
+
+        .total {
+            font-size: 24px;
+            font-weight: bold;
+            margin-top: 20px;
+            text-align: right;
+        }
+
+        @media(max-width:768px) {
+
+            .formulario {
+                grid-template-columns: 1fr;
+            }
+
+            .resumen {
+                grid-template-columns: 1fr 1fr;
+            }
+
+            table {
+                font-size: 12px;
+            }
+        }
+    </style>
+</head>
+
+<body>
+
+    <div class="container">
+
+        <h1>💰 Calculadora de Gastos Personales</h1>
+
+        <div class="formulario">
+
+            <input type="text" id="nombre" placeholder="Nombre del gasto">
+
+            <input type="number" id="monto" placeholder="Monto">
+
+            <input type="date" id="fecha">
+
+            <select id="categoria">
+                <option>Comida</option>
+                <option>Combustible</option>
+                <option>Servicios</option>
+                <option>Salud</option>
+                <option>Educación</option>
+                <option>Entretenimiento</option>
+                <option>Otros</option>
+            </select>
+
+            <button class="btn-agregar" onclick="agregarGasto()">
+                Agregar
+            </button>
+
+        </div>
+
+        <div class="filtros">
+
+            <select id="filtro" onchange="aplicarFiltro()">
+                <option value="todos">Todos</option>
+                <option value="dia">Hoy</option>
+                <option value="semana">Esta semana</option>
+                <option value="mes">Este mes</option>
+                <option value="anio">Este año</option>
+            </select>
+
+            <button onclick="exportarCSV()">
+                Exportar CSV
+            </button>
+
+        </div>
+
+        <div class="resumen">
+
+            <div class="card">
+                <h3>Total</h3>
+                <p id="totalGeneral">$0</p>
+            </div>
+
+            <div class="card">
+                <h3>Mes</h3>
+                <p id="totalMes">$0</p>
+            </div>
+
+            <div class="card">
+                <h3>Año</h3>
+                <p id="totalAnio">$0</p>
+            </div>
+
+            <div class="card">
+                <h3>Cantidad</h3>
+                <p id="cantidad">0</p>
+            </div>
+
+        </div>
+
+        <table>
+
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Concepto</th>
+                    <th>Categoría</th>
+                    <th>Monto</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+
+            <tbody id="tablaGastos">
+            </tbody>
+
+        </table>
+
+        <div class="total">
+            Total filtrado: <span id="totalFiltrado">$0</span>
+        </div>
+
+    </div>
+
+    <script>
+
+        let gastos =
+            JSON.parse(localStorage.getItem("gastos")) || [];
+
+        let editandoId = null;
+
+        document.getElementById("fecha").value =
+            new Date().toISOString().split("T")[0];
+
+        function guardar() {
+            localStorage.setItem(
+                "gastos",
+                JSON.stringify(gastos)
+            );
+        }
+
+        function agregarGasto() {
+
+            const nombre =
+                document.getElementById("nombre").value;
+
+            const monto =
+                parseFloat(document.getElementById("monto").value);
+
+            const fecha =
+                document.getElementById("fecha").value;
+
+            const categoria =
+                document.getElementById("categoria").value;
+
+            if (!nombre || !monto || monto <= 0) {
+                alert("Complete los datos");
+                return;
+            }
+
+            if (editandoId) {
+
+                const gasto =
+                    gastos.find(g => g.id === editandoId);
+
+                gasto.nombre = nombre;
+                gasto.monto = monto;
+                gasto.fecha = fecha;
+                gasto.categoria = categoria;
+
+                editandoId = null;
+
+                document.querySelector(".btn-agregar").innerText =
+                    "Agregar";
+
+            } else {
+
+                gastos.push({
+                    id: Date.now(),
+                    nombre,
+                    monto,
+                    fecha,
+                    categoria
+                });
+
+            }
+
+            guardar();
+
+            limpiar();
+
+            aplicarFiltro();
+        }
+
+        function limpiar() {
+
+            document.getElementById("nombre").value = "";
+            document.getElementById("monto").value = "";
+        }
+
+        function editarGasto(id) {
+
+            const gasto =
+                gastos.find(g => g.id === id);
+
+            document.getElementById("nombre").value =
+                gasto.nombre;
+
+            document.getElementById("monto").value =
+                gasto.monto;
+
+            document.getElementById("fecha").value =
+                gasto.fecha;
+
+            document.getElementById("categoria").value =
+                gasto.categoria;
+
+            editandoId = id;
+
+            document.querySelector(".btn-agregar").innerText =
+                "Guardar cambios";
+        }
+
+        function borrarGasto(id) {
+
+            if (confirm("¿Eliminar gasto?")) {
+
+                gastos =
+                    gastos.filter(g => g.id !== id);
+
+                guardar();
+
+                aplicarFiltro();
+            }
+        }
+
+        function aplicarFiltro() {
+
+            const filtro =
+                document.getElementById("filtro").value;
+
+            const hoy = new Date();
+
+            let lista = [...gastos];
+
+            if (filtro === "dia") {
+
+                const hoyTexto =
+                    hoy.toISOString().split("T")[0];
+
+                lista =
+                    gastos.filter(g =>
+                        g.fecha === hoyTexto
+                    );
+            }
+
+            if (filtro === "semana") {
+
+                const inicio =
+                    new Date(hoy);
+
+                inicio.setDate(
+                    hoy.getDate() - hoy.getDay()
+                );
+
+                lista =
+                    gastos.filter(g => {
+
+                        const fecha =
+                            new Date(g.fecha);
+
+                        return fecha >= inicio;
+                    });
+            }
+
+            if (filtro === "mes") {
+
+                lista =
+                    gastos.filter(g => {
+
+                        const fecha =
+                            new Date(g.fecha);
+
+                        return fecha.getMonth() === hoy.getMonth()
+                            &&
+                            fecha.getFullYear() === hoy.getFullYear();
+                    });
+            }
+
+            if (filtro === "anio") {
+
+                lista =
+                    gastos.filter(g => {
+
+                        const fecha =
+                            new Date(g.fecha);
+
+                        return fecha.getFullYear() === hoy.getFullYear();
+                    });
+            }
+
+            mostrar(lista);
+        }
+
+        function mostrar(lista) {
+
+            const tabla =
+                document.getElementById("tablaGastos");
+
+            tabla.innerHTML = "";
+
+            let total = 0;
+
+            lista.forEach(gasto => {
+
+                total += gasto.monto;
+
+                tabla.innerHTML += `
+        <tr>
+            <td>${gasto.fecha}</td>
+            <td>${gasto.nombre}</td>
+            <td>${gasto.categoria}</td>
+            <td>$${gasto.monto.toLocaleString()}</td>
+            <td>
+                <button class="btn-editar"
+                onclick="editarGasto(${gasto.id})">
+                Editar
+                </button>
+
+                <button class="btn-borrar"
+                onclick="borrarGasto(${gasto.id})">
+                Borrar
+                </button>
+            </td>
+        </tr>
+        `;
+            });
+
+            document.getElementById("totalFiltrado")
+                .innerText =
+                "$" + total.toLocaleString();
+
+            actualizarResumen();
+        }
+
+        function actualizarResumen() {
+
+            const hoy = new Date();
+
+            const totalGeneral =
+                gastos.reduce((a, b) => a + b.monto, 0);
+
+            const totalMes =
+                gastos
+                    .filter(g => {
+                        const f = new Date(g.fecha);
+
+                        return f.getMonth() === hoy.getMonth()
+                            &&
+                            f.getFullYear() === hoy.getFullYear();
+                    })
+                    .reduce((a, b) => a + b.monto, 0);
+
+            const totalAnio =
+                gastos
+                    .filter(g => {
+                        const f = new Date(g.fecha);
+
+                        return f.getFullYear() === hoy.getFullYear();
+                    })
+                    .reduce((a, b) => a + b.monto, 0);
+
+            document.getElementById("totalGeneral")
+                .innerText =
+                "$" + totalGeneral.toLocaleString();
+
+            document.getElementById("totalMes")
+                .innerText =
+                "$" + totalMes.toLocaleString();
+
+            document.getElementById("totalAnio")
+                .innerText =
+                "$" + totalAnio.toLocaleString();
+
+            document.getElementById("cantidad")
+                .innerText =
+                gastos.length;
+        }
+
+        function exportarCSV() {
+
+            let csv =
+                "Fecha,Concepto,Categoria,Monto\n";
+
+            gastos.forEach(g => {
+
+                csv +=
+                    `${g.fecha},${g.nombre},${g.categoria},${g.monto}\n`;
+            });
+
+            const blob =
+                new Blob([csv], {
+                    type: "text/csv"
+                });
+
+            const url =
+                URL.createObjectURL(blob);
+
+            const a =
+                document.createElement("a");
+
+            a.href = url;
+            a.download = "gastos.csv";
+            a.click();
+        }
+
+        aplicarFiltro();
+
+    </script>
+
+</body>
+
+</html>
+```
