@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>✍️ TextoSentir - Analizador Mejorado</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Space+Grotesk:wght@500;600&display=swap');
+
+        body {
+            font-family: 'Poppins', sans-serif;
+        }
+
+        .title-font {
+            font-family: 'Space Grotesk', sans-serif;
+        }
+
+        .highlighted {
+            line-height: 1.8;
+        }
+
+        .positive {
+            background-color: #a7f3d0;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+
+        .negative {
+            background-color: #fecaca;
+            padding: 2px 6px;
+            border-radius: 6px;
+            font-weight: 500;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-emerald-50 via-white to-teal-50 min-h-screen">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+        <div class="text-center mb-10">
+            <div
+                class="inline-flex items-center gap-3 bg-white shadow-lg shadow-emerald-100 rounded-3xl px-6 py-3 mb-6">
+                <div class="w-12 h-12 bg-emerald-500 text-white rounded-2xl flex items-center justify-center text-3xl">
+                    ✍️</div>
+                <div>
+                    <h1 class="title-font text-4xl font-semibold tracking-tighter text-gray-900">TextoSentir</h1>
+                    <p class="text-emerald-600 text-sm -mt-1">análisis de sentimiento mejorado</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-6">
+            <!-- Input -->
+            <div class="lg:col-span-3">
+                <div class="bg-white rounded-3xl shadow-xl p-8">
+                    <textarea id="inputText" rows="14"
+                        class="w-full p-6 text-lg border border-gray-200 rounded-2xl focus:outline-none focus:border-emerald-400"
+                        placeholder="Escribe o pega tu texto aquí..."></textarea>
+
+                    <div class="flex gap-4 mt-6">
+                        <button onclick="clearText()"
+                            class="flex-1 py-4 border border-gray-300 rounded-2xl hover:bg-gray-50 transition">Limpiar</button>
+                        <button onclick="loadExample()"
+                            class="flex-1 py-4 border border-emerald-200 text-emerald-600 rounded-2xl hover:bg-emerald-50 transition">Ejemplo</button>
+                        <button onclick="analyzeText()"
+                            class="flex-[2] py-4 bg-emerald-500 text-white font-semibold rounded-2xl hover:bg-emerald-600 transition-all active:scale-95">Analizar
+                            Texto</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div id="results" class="lg:col-span-2 hidden space-y-6">
+                <div class="bg-white rounded-3xl p-6 shadow-xl">
+                    <h3 class="font-medium text-gray-500 mb-4">Estadísticas</h3>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div id="wordCount" class="text-3xl font-bold text-gray-800">0</div>
+                            <div class="text-xs text-gray-500">Palabras</div>
+                        </div>
+                        <div>
+                            <div id="sentenceCount" class="text-3xl font-bold text-gray-800">0</div>
+                            <div class="text-xs text-gray-500">Oraciones</div>
+                        </div>
+                        <div>
+                            <div id="posCount" class="text-3xl font-bold text-emerald-600">0</div>
+                            <div class="text-xs text-gray-500">Positivas</div>
+                        </div>
+                        <div>
+                            <div id="negCount" class="text-3xl font-bold text-red-600">0</div>
+                            <div class="text-xs text-gray-500">Negativas</div>
+                        </div>
+                    </div>
+                </div>
+
+                <div id="sentimentCard" class="bg-white rounded-3xl p-8 shadow-xl text-center">
+                    <div id="sentimentEmoji" class="text-7xl mb-4"></div>
+                    <div id="sentimentText" class="text-3xl font-bold mb-2"></div>
+                    <div id="sentimentScore" class="text-sm text-gray-500"></div>
+                </div>
+
+                <div class="bg-white rounded-3xl p-6 shadow-xl">
+                    <h3 class="font-medium text-gray-500 mb-4">Palabras más frecuentes</h3>
+                    <div id="topWords" class="space-y-3"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Texto resaltado -->
+        <div id="highlightedText" class="hidden mt-8 bg-white rounded-3xl p-8 shadow-xl">
+            <h3 class="font-medium text-gray-500 mb-4">Texto con sentimiento resaltado</h3>
+            <div id="highlightedContent" class="highlighted text-lg leading-relaxed"></div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== LISTAS MEJORADAS ====================
+
+        const lexicon = {
+            // Positivas con intensidad
+            positive: {
+                "excelente": 3, "maravilloso": 3, "increíble": 3, "fantástico": 3, "genial": 3,
+                "espectacular": 3, "perfecto": 3, "amor": 3, "felicidad": 3,
+                "feliz": 2, "bueno": 2, "alegría": 2, "hermoso": 2, "contento": 2,
+                "optimista": 2, "logro": 2, "éxito": 2, "gracias": 2, "bien": 2,
+                "mejor": 2, "gustar": 2, "encantar": 2, "sorprendente": 2, "fácil": 2,
+                "rápido": 1, "bonito": 1, "agradable": 1, "interesante": 1, "útil": 1,
+                "satisfactorio": 2, "emocionante": 2, "motivado": 2, "energía": 2
+            },
+            // Negativas con intensidad
+            negative: {
+                "terrible": -3, "horrible": -3, "pesimo": -3, "desastre": -3, "odio": -3,
+                "fracaso": -3, "trágico": -3, "decepcionante": -3,
+                "triste": -2, "malo": -2, "problema": -2, "difícil": -2, "frustrado": -2,
+                "enojado": -2, "estres": -2, "frustración": -2, "preocupado": -2,
+                "cansado": -2, "aburrido": -2, "decepcionado": -2, "odio": -3,
+                "nunca": -2, "peor": -2, "error": -2, "fallo": -2, "confuso": -2,
+                "lento": -1, "complicado": -2, "molesto": -2, "inútil": -2
+            }
+        };
+
+        const negations = new Set(["no", "nada", "jamás", "nunca", "ningún", "ninguna", "ninguno", "ni", "tampoco"]);
+
+        // Stopwords mejoradas
+        const stopwords = new Set(["el", "la", "los", "las", "un", "una", "unos", "unas", "y", "o", "pero", "porque", "como", "si", "este", "esta", "es", "son", "era", "fue", "hay", "más", "muy", "tan", "todo", "toda", "todos", "todas"]);
+
+        function analyzeText() {
+            let originalText = document.getElementById('inputText').value.trim();
+            if (!originalText) return alert("Por favor ingresa un texto");
+
+            const lowerText = originalText.toLowerCase();
+            const words = lowerText.match(/\b[a-záéíóúñü]+\b/g) || [];
+            const sentences = (originalText.match(/[.!?]+/g) || []).length || 1;
+
+            let totalScore = 0;
+            let posCount = 0;
+            let negCount = 0;
+            let lastWasNegation = false;
+
+            words.forEach((word, index) => {
+                if (stopwords.has(word)) return;
+
+                let score = 0;
+
+                // Detectar negación
+                if (negations.has(word)) {
+                    lastWasNegation = true;
+                    return;
+                }
+
+                // Aplicar puntuación
+                if (lexicon.positive[word]) {
+                    score = lexicon.positive[word];
+                } else if (lexicon.negative[word]) {
+                    score = lexicon.negative[word];
+                }
+
+                // Si había negación antes, invertimos el signo
+                if (lastWasNegation) {
+                    score = -score;
+                    lastWasNegation = false;
+                }
+
+                totalScore += score;
+
+                if (score > 0) posCount++;
+                else if (score < 0) negCount++;
+            });
+
+            // Determinar sentimiento
+            let sentiment, emoji, colorClass;
+            if (totalScore >= 6) { sentiment = "Muy Positivo"; emoji = "😊"; colorClass = "text-emerald-600"; }
+            else if (totalScore >= 2) { sentiment = "Positivo"; emoji = "🙂"; colorClass = "text-emerald-500"; }
+            else if (totalScore <= -6) { sentiment = "Muy Negativo"; emoji = "😢"; colorClass = "text-red-600"; }
+            else if (totalScore <= -2) { sentiment = "Negativo"; emoji = "🙁"; colorClass = "text-red-500"; }
+            else { sentiment = "Neutro"; emoji = "😐"; colorClass = "text-amber-500"; }
+
+            // Renderizar resultados
+            document.getElementById('wordCount').textContent = words.length;
+            document.getElementById('sentenceCount').textContent = sentences;
+            document.getElementById('posCount').textContent = posCount;
+            document.getElementById('negCount').textContent = negCount;
+
+            document.getElementById('sentimentEmoji').textContent = emoji;
+            document.getElementById('sentimentText').innerHTML = sentiment;
+            document.getElementById('sentimentText').className = `text-3xl font-bold ${colorClass}`;
+            document.getElementById('sentimentScore').textContent = `Puntuación: ${totalScore} puntos`;
+
+            // Top words (simple)
+            renderTopWords(words);
+
+            // Resaltar texto
+            renderHighlightedText(originalText);
+
+            document.getElementById('results').classList.remove('hidden');
+            document.getElementById('highlightedText').classList.remove('hidden');
+        }
+
+        function renderTopWords(words) {
+            const countMap = {};
+            words.forEach(w => {
+                if (!stopwords.has(w) && w.length > 3) {
+                    countMap[w] = (countMap[w] || 0) + 1;
+                }
+            });
+
+            const top = Object.entries(countMap)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            const container = document.getElementById('topWords');
+            container.innerHTML = '';
+            top.forEach(([word, count]) => {
+                const div = document.createElement('div');
+                div.className = "flex justify-between bg-gray-50 px-4 py-2 rounded-2xl";
+                div.innerHTML = `<span class="font-medium">${word}</span><span class="text-emerald-600 font-semibold">${count}</span>`;
+                container.appendChild(div);
+            });
+        }
+
+        function renderHighlightedText(text) {
+            let highlighted = text;
+
+            // Resaltar positivas
+            Object.keys(lexicon.positive).forEach(word => {
+                const regex = new RegExp(`\\b${word}\\b`, 'gi');
+                highlighted = highlighted.replace(regex, `<span class="positive">$&</span>`);
+            });
+
+            // Resaltar negativas
+            Object.keys(lexicon.negative).forEach(word => {
+                const regex = new RegExp(`\\b${word}\\b`, 'gi');
+                highlighted = highlighted.replace(regex, `<span class="negative">$&</span>`);
+            });
+
+            document.getElementById('highlightedContent').innerHTML = highlighted;
+        }
+
+        function clearText() {
+            document.getElementById('inputText').value = '';
+        }
+
+        function loadExample() {
+            document.getElementById('inputText').value = `Hoy fue un día excelente y me siento muy feliz. El proyecto salió de maravilla gracias al increíble esfuerzo del equipo. Sin embargo, nada fue perfecto porque tuvimos algunos problemas técnicos que nos frustraron un poco. Al final logramos superarlo y estoy muy contento con el resultado.`;
+            analyzeText();
+        }
+    </script>
+</body>
+
+</html>
