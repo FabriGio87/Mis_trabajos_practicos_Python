@@ -1,0 +1,78 @@
+
+:root{
+--a:#1b9d65;
+--b:#1976ff;
+--glass:rgba(255,255,255,.15);
+}
+*{box-sizing:border-box}
+body{
+margin:0;
+font-family:Montserrat,sans-serif;
+min-height:100vh;
+display:grid;
+place-items:center;
+overflow:hidden;
+background:#0b1728;
+color:white;
+}
+.bg{
+position:fixed;inset:0;
+background:linear-gradient(-45deg,#0d5,#0bf,#0b1728,#38b000);
+background-size:400% 400%;
+animation:g 18s ease infinite;
+}
+@keyframes g{
+0%{background-position:0 50%}
+50%{background-position:100% 50%}
+100%{background-position:0 50%}
+}
+.card{
+position:relative;
+width:min(900px,92vw);
+backdrop-filter:blur(18px);
+background:var(--glass);
+border:1px solid rgba(255,255,255,.2);
+border-radius:24px;
+padding:30px;
+box-shadow:0 20px 50px rgba(0,0,0,.4);
+}
+h1{text-align:center}
+.grid{
+display:grid;
+grid-template-columns:2fr 2fr auto 2fr;
+gap:15px;
+align-items:end;
+}
+label{display:block;margin-bottom:6px}
+input,select,button{
+width:100%;
+padding:14px;
+border-radius:14px;
+border:none;
+font:inherit;
+}
+button{cursor:pointer;font-weight:700}
+.swapBox button{font-size:26px}
+.result{
+margin-top:25px;
+text-align:center;
+}
+#value{
+font-size:3rem;
+font-weight:800;
+}
+.history{
+margin-top:25px;
+background:rgba(255,255,255,.08);
+padding:15px;border-radius:16px;
+}
+.head{display:flex;justify-content:space-between;align-items:center}
+#history{padding-left:18px}
+#toast{
+position:fixed;bottom:20px;left:50%;transform:translateX(-50%);
+background:#111;padding:12px 20px;border-radius:10px;
+opacity:0;transition:.3s;color:#fff}
+#toast.show{opacity:1}
+@media(max-width:760px){
+.grid{grid-template-columns:1fr}
+}
